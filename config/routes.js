@@ -1,7 +1,6 @@
 const axios = require("axios");
-const express = require("express");
 const bcrypt = require("bcryptjs");
-const server = express();
+const tokenService = require("../auth/token-service.js");
 
 const Users = require("./routes-model.js");
 
@@ -15,13 +14,13 @@ module.exports = server => {
 
 function register(req, res) {
   // implement user registration
-  server.post("http://localhost:3300/api/register");
   let user = req.body;
-  const hash = bcrypt.hashSync(user.password, 10);
+  const hash = bcrypt.hashSync(user.password, 5);
   user.password = hash;
   Users.add(user)
     .then(saved => {
-      res.status(201).json(saved);
+      const token = tokenService.generateToken(user);
+      res.status(201).json({ saved, message: `registered, ${token}` });
     })
     .catch(error => {
       res.status(500).json(error);
@@ -30,9 +29,7 @@ function register(req, res) {
 
 function login(req, res) {
   // implement user login
-  server.post("http://localhost:3300/api/login");
   let { username, password } = req.body;
-
   Users.findBy({ username })
     .first()
     .then(user => {
